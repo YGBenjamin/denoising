@@ -1,0 +1,73 @@
+import numpy as np
+
+def convolution(image, C):
+    C_n, C_m = C.shape[0]-1, C.shape[1]-1
+    img_b = np.zeros((image.shape[0]+C_n, image.shape[1]+C_m)).astype(np.float32)
+    decalage = C_n//2
+    img_b[decalage:-decalage, decalage:-decalage] = image
+
+    res = np.zeros_like(image).astype(np.float32)
+    n, m = res.shape[0], res.shape[1]
+    for i in range(C.shape[0]):
+        for j in range(C.shape[1]):
+            res += C[i, j]*img_b[i:n+i, j:m+j]
+
+    return res
+
+def blur_filter(img, size):
+    kernel_blur = np.ones((size, size)) / size**2
+    return convolution(img, kernel_blur)
+
+def gaussian_kernel(size, sigma=0.8):
+    ax = np.linspace(-size//2, size//2, size)
+    xx, yy = np.meshgrid(ax, ax)
+    kernel = np.exp(-(xx**2 + yy**2)/(2.0*sigma**2))
+    return kernel/np.sum(kernel) #on normalise
+
+def gaussian_filter(img, size, sigma=0.8):
+    kernel_gaussian = gaussian_kernel(size, sigma)
+    return convolution(img, kernel_gaussian)
+
+def median_filter(img, size=5):
+    img_b = np.zeros((img.shape[0]+size-1, img.shape[1]+size-1)).astype(np.float32)
+    decalage = size//2
+    img_b[decalage:-decalage, decalage:-decalage] = img
+    n = img_b.shape[0]
+    m = img_b.shape[1]
+
+    layers = [] #on crée une big matrice de tous nos décalages
+    for i in range(size):
+        for j in range(size):
+            layers.append(img_b[i:n-2*decalage+i, j:m-2*decalage+j])
+
+    clean_img = np.median(layers, axis=0) #on applique la fonction sur les indices par rapport à l'axe 0
+
+    return clean_img
+
+def bilateral(img, size, sigma_s, sigma_i):
+    img = img.astype(np.float32)
+    #on refait la même manip pour pouvoir agrandir l'image
+    img_b = np.zeros((img.shape[0]+size-1, img.shape[1]+size-1)).astype(np.float32)
+    decalage = size//2
+    img_b[decalage:-decalage, decalage:-decalage] = img
+    n = img_b.shape[0]
+    m = img_b.shape[1]
+
+    #clean_img = np.zeros_like(img)
+
+    kernel_g = gaussian_kernel(size=size, sigma=sigma_s)
+    #layers = []
+    pixels = np.zeros_like(img) # on va additioner toutes les valeurs des pixels
+    poids = np.zeros_like(img) # on va garder tous les poids pour normaliser
+
+    for i in range(size):
+        for j in range(size):
+            W_s = kernel_g[i,j]
+            layer = img - img_b[i:n-2*decalage+i, j:m-2*decalage+j] #Ic - Iv
+            W_r = np.exp(-(layer**2)/(2*sigma_i**2)) # calcul de la différence d'intensité
+            poids_final = W_r*W_s # multiplier les deux poids
+            poids += poids_final
+            pixels += poids_final*img_b[i:n-2*decalage+i, j:m-2*decalage+j]
+
+    return pixels/poids
+    
