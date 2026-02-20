@@ -71,3 +71,32 @@ def bilateral(img, size, sigma_s, sigma_i):
 
     return pixels/poids
     
+
+def nlm_denoising(img, h, search_size=21, patch_size=7, sigma_patch=0.8):
+    #Préparation
+    img = img.astype(np.float32)
+    rayon_search = search_size//2
+    rayon_patch = patch_size//2
+    img_pad = np.pad(img, rayon_search+rayon_patch, mode='reflect') #comme le img_b d'avant mais optimisé avec numpy 
+    kernel = gaussian_kernel(size=patch_size, sigma=sigma_patch)
+    
+    pixels = np.zeros_like(img)
+    poids = np.zeros_like(img)
+    n, m = img_pad.shape
+    N, M = img.shape
+
+    # On parcourt tous les décalages possibles dans la fenêtre de recherche
+    for dx in range(search_size):
+        for dy in range(search_size):
+            layer = img_pad[dx:N+dx, dy:M+dy] #version décalée
+
+            # calculer la distance entre deux patchs, revient à comparer les gaussiennes, puisuqe ce sont des moyennes pondérées des patchs ! quelle idée de génie
+            diff = (img-layer)**2
+            ssd_patch = convolution(diff, kernel)
+            
+            w = np.exp(-ssd_patch/(h**2))
+            
+            poids += w
+            pixels += w*layer
+
+    return pixels / poids
