@@ -5,6 +5,8 @@ This project is the logical next step following my work on Harris Corner Detecti
 
 ![App Screenshot](./data/app_img.png)
 
+**Try the project:** [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://denoising-ygbenjamin.streamlit.app/)
+
 ## Why this project?
 
 In medical imaging (MedTech), noise is inevitable. Whether in radiography or MRI, the physics of the sensor always "pollutes" the original signal. My goal with this project was to move beyond using black-box libraries and understand how to:
@@ -40,4 +42,5 @@ Throughout the project, I used MSE and PSNR to evaluate quality. I learned that 
 Implementing these filters from scratch forced me to master NumPy vectorization. Moving from pixel-wise loops to shifted array operations reduced execution time from several minutes to a few seconds. This transition is essential for making these algorithms viable in any real-world production environment.
 
 ---
+
 *Yang Benjamin, Feb 2026*
